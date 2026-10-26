@@ -45,6 +45,13 @@ namespace CarRental.Models
 
         public Employee? Employee { get; set; }
 
+        [Display(Name = "Location")]
+        [Required(ErrorMessage = "Location cannot be left blank")]
+        public int LocationID { get; set; }
+
+        public Location? Location { get; set; }
+
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             //New Reservations only: a reservation cannot be created with a Pickup Date in the past.

@@ -112,6 +112,44 @@ namespace CarRental.Data.CRMigrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("CarRental.Models.Location", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Locations");
+                });
+
             modelBuilder.Entity("CarRental.Models.MembershipType", b =>
                 {
                     b.Property<int>("ID")
@@ -135,6 +173,41 @@ namespace CarRental.Data.CRMigrations
                     b.ToTable("MembershipTypes");
                 });
 
+            modelBuilder.Entity("CarRental.Models.Rental", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CustomerID")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("EmployeeID")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("PickupDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RentalNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ReturnDate")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("CustomerID");
+
+                    b.HasIndex("EmployeeID");
+
+                    b.HasIndex("RentalNumber")
+                        .IsUnique();
+
+                    b.ToTable("Rentals");
+                });
+
             modelBuilder.Entity("CarRental.Models.Reservation", b =>
                 {
                     b.Property<int>("ID")
@@ -142,6 +215,9 @@ namespace CarRental.Data.CRMigrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("EmployeeID")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LocationID")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("PickupDate")
@@ -162,10 +238,62 @@ namespace CarRental.Data.CRMigrations
 
                     b.HasIndex("EmployeeID");
 
+                    b.HasIndex("LocationID");
+
                     b.HasIndex("ReservationNumber")
                         .IsUnique();
 
                     b.ToTable("Reservations");
+                });
+
+            modelBuilder.Entity("CarRental.Models.Vehicle", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("DailyRate")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Make")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("LicensePlate")
+                        .IsUnique();
+
+                    b.ToTable("Vehicles");
+                });
+
+            modelBuilder.Entity("CarRental.Models.VehicleLocation", b =>
+                {
+                    b.Property<int>("VehicleID")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LocationID")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("VehicleID", "LocationID");
+
+                    b.HasIndex("LocationID");
+
+                    b.ToTable("VehicleLocations");
                 });
 
             modelBuilder.Entity("CarRental.Models.Customer", b =>
@@ -179,6 +307,24 @@ namespace CarRental.Data.CRMigrations
                     b.Navigation("MembershipType");
                 });
 
+            modelBuilder.Entity("CarRental.Models.Rental", b =>
+                {
+                    b.HasOne("CarRental.Models.Customer", "Customer")
+                        .WithMany("Rentals")
+                        .HasForeignKey("CustomerID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CarRental.Models.Employee", "Employee")
+                        .WithMany("Rentals")
+                        .HasForeignKey("EmployeeID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("CarRental.Models.Reservation", b =>
                 {
                     b.HasOne("CarRental.Models.Employee", "Employee")
@@ -187,17 +333,63 @@ namespace CarRental.Data.CRMigrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CarRental.Models.Location", "Location")
+                        .WithMany("Reservations")
+                        .HasForeignKey("LocationID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Employee");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("CarRental.Models.VehicleLocation", b =>
+                {
+                    b.HasOne("CarRental.Models.Location", "Location")
+                        .WithMany("VehicleLocations")
+                        .HasForeignKey("LocationID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CarRental.Models.Vehicle", "Vehicle")
+                        .WithMany("VehicleLocations")
+                        .HasForeignKey("VehicleID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Location");
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("CarRental.Models.Customer", b =>
+                {
+                    b.Navigation("Rentals");
                 });
 
             modelBuilder.Entity("CarRental.Models.Employee", b =>
                 {
+                    b.Navigation("Rentals");
+
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("CarRental.Models.Location", b =>
+                {
+                    b.Navigation("Reservations");
+
+                    b.Navigation("VehicleLocations");
                 });
 
             modelBuilder.Entity("CarRental.Models.MembershipType", b =>
                 {
                     b.Navigation("Customers");
+                });
+
+            modelBuilder.Entity("CarRental.Models.Vehicle", b =>
+                {
+                    b.Navigation("VehicleLocations");
                 });
 #pragma warning restore 612, 618
         }

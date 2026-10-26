@@ -81,6 +81,9 @@ namespace CarRental.Models
 
         public MembershipType? MembershipType { get; set; }
 
+        //Navigation Properties
+        public ICollection<Rental> Rentals { get; set; } = new HashSet<Rental>();
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (DOB.Date > DateTime.Today)

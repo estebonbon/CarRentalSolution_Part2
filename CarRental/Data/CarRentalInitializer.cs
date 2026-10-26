@@ -143,7 +143,28 @@ namespace CarRental.Data
                                 Email = "cxavier@outlook.com",
                                 HireDate = DateTime.Parse("2016-02-22"),
                                 IsActive = true
-                            });
+                            },
+                            new Employee
+                            {
+                                FirstName = "Tony",
+                                MiddleName = "Edward",
+                                LastName = "Stark",
+                                Phone = "9055556789",
+                                Email = "tstark@outlook.com",
+                                HireDate = DateTime.Parse("2020-05-15"),
+                                IsActive = true
+                            },
+                            new Employee
+                            {
+                                FirstName = "Bruce",
+                                MiddleName = "Thomas",
+                                LastName = "Wayne",
+                                Phone = "9055557890",
+                                Email = "bwayne@outlook.com",
+                                HireDate = DateTime.Parse("2019-03-12"),
+                                IsActive = true
+                            }
+                            );
                             context.SaveChanges();
                         }
                         // Seed Customers if there aren't any.
@@ -194,9 +215,70 @@ namespace CarRental.Data
                                 Phone = "9055551234",
                                 Email = "jdoe@outlook.com",
                                 MembershipTypeID = context.MembershipTypes.FirstOrDefault(m => m.Name == "Corporate").ID
-                            });
+                            },
+                            new Customer
+                            {
+                                FirstName = "Peter",
+                                MiddleName = "James",
+                                LastName = "Parker",
+                                DriverLicense = "P5675675678",
+                                DOB = DateTime.Parse("1995-08-10"),
+                                Phone = "9055555678",
+                                Email = "pparker@outlook.com",
+                                MembershipTypeID = context.MembershipTypes.First(m => m.Name == "Standard").ID
+                            }
+                            );
                             context.SaveChanges();
                         }
+
+                        //Seed Locations if there arent anyy
+                        if (!context.Locations.Any())
+                        {
+                            context.Locations.AddRange(
+                                new Location
+                                {
+                                    Name = "Louth Auto",
+                                    Address = "59 Louth Street",
+                                    City = "St. Catharines",
+                                    PostalCode = "L2R 3M2",
+                                    Phone = "9053218897"
+                                },
+                                new Location
+                                {
+                                    Name = "Niagara Car Rentals",
+                                    Address = "125 Queen Street",
+                                    City = "Niagara Falls",
+                                    PostalCode = "L2E 2L1",
+                                    Phone = "9055551234"
+                                },
+                                new Location
+                                {
+                                    Name = "Welland Auto Rentals",
+                                    Address = "75 East Main Street",
+                                    City = "Welland",
+                                    PostalCode = "L3B 3W4",
+                                    Phone = "9055552345"
+                                },
+                                new Location
+                                {
+                                    Name = "Hamilton Vehicle Rentals",
+                                    Address = "210 King Street East",
+                                    City = "Hamilton",
+                                    PostalCode = "L8N 1B5",
+                                    Phone = "9055553456"
+                                },
+                                new Location
+                                {
+                                    Name = "Thorold Car Rentals",
+                                    Address = "45 Front Street South",
+                                    City = "Thorold",
+                                    PostalCode = "L2V 1X3",
+                                    Phone = "9055554567"
+                                }
+                            );
+                            context.SaveChanges(); //I keep forgeting this line
+                        }
+
                         // Seed Reservations if there aren't any.
                         // Note: New Reservations cannot be created with a Pickup Date in the past.
                         // However, seed data can include past Reservations to represent completed rental history.
@@ -211,7 +293,8 @@ namespace CarRental.Data
                                 PickupDate = DateTime.Today.AddDays(2).AddHours(9),
                                 ReturnDate = DateTime.Today.AddDays(5).AddHours(17),
                                 Status = Status.Confirmed,
-                                EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Gregory" && e.LastName == "House").ID
+                                EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Gregory" && e.LastName == "House").ID,
+                                LocationID = context.Locations.FirstOrDefault(l => l.Name == "Welland Auto Rentals").ID
                             },
                             new Reservation
                             {
@@ -219,7 +302,8 @@ namespace CarRental.Data
                                 PickupDate = DateTime.Today.AddDays(5).AddHours(13),
                                 ReturnDate = DateTime.Today.AddDays(12).AddHours(13),
                                 Status = Status.Pending,
-                                EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Gregory" && e.LastName == "House").ID
+                                EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Gregory" && e.LastName == "House").ID,
+                                LocationID = context.Locations.FirstOrDefault(l => l.Name == "Niagara Car Rentals").ID
                             },
                             new Reservation
                             {
@@ -227,7 +311,8 @@ namespace CarRental.Data
                                 PickupDate = DateTime.Today.AddDays(-10).AddHours(10),
                                 ReturnDate = DateTime.Today.AddDays(-7).AddHours(10),
                                 Status = Status.Completed,
-                                EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Doogie" && e.LastName == "Houser").ID
+                                EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Doogie" && e.LastName == "Houser").ID,
+                                LocationID = context.Locations.FirstOrDefault(l => l.Name == "Niagara Car Rentals").ID
                             },
                             new Reservation
                             {
@@ -235,10 +320,153 @@ namespace CarRental.Data
                                 PickupDate = DateTime.Today.AddDays(14).AddHours(8),
                                 ReturnDate = DateTime.Today.AddDays(16).AddHours(8),
                                 Status = Status.Cancelled,
-                                EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Charles" && e.LastName == "Xavier").ID
+                                EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Charles" && e.LastName == "Xavier").ID,
+                                LocationID = context.Locations.FirstOrDefault(l => l.Name == "Louth Auto").ID
                             });
                             context.SaveChanges();
                         }
+
+                        
+                        
+                        //Seed the Vechiles if there arent any
+                        if(!context.Vehicles.Any())
+                        {
+                            context.Vehicles.AddRange(
+                                new Vehicle
+                                {
+                                    Make = "Acura",
+                                    Model = "ADX",
+                                    Year = 2022,
+                                    LicensePlate = "LN88216K",
+                                    DailyRate = 213.00
+                                },
+                                new Vehicle
+                                {
+                                    Make = "Honda",
+                                    Model = "Civic",
+                                    Year = 2024,
+                                    LicensePlate = "ABCD123",
+                                    DailyRate = 75.50
+                                },
+                                new Vehicle
+                                {
+                                    Make = "Toyota",
+                                    Model = "Corolla",
+                                    Year = 2023,
+                                    LicensePlate = "EFGH456",
+                                    DailyRate = 85.99
+                                },
+                                new Vehicle
+                                {
+                                    Make = "BMW",
+                                    Model = "330i",
+                                    Year = 2025,
+                                    LicensePlate = "JKLM789",
+                                    DailyRate = 175.00
+                                },
+                                new Vehicle
+                                {
+                                    Make = "Hyundai",
+                                    Model = "Elantra",
+                                    Year = 2026,
+                                    LicensePlate = "NPQR234",
+                                    DailyRate = 95.75
+                                }
+                            );
+                            context.SaveChanges();
+                        }
+
+                        //Seed Vechile Location if there arent any
+                        if (!context.VehicleLocations.Any())
+                        {
+                            context.VehicleLocations.AddRange(
+                                new VehicleLocation
+                                {
+                                    VehicleID = 1,
+                                    LocationID = 2
+                                },
+                                new VehicleLocation
+                                {
+                                    VehicleID = 5,
+                                    LocationID = 4
+                                },
+                                new VehicleLocation
+                                {
+                                    VehicleID = 2,
+                                    LocationID = 2
+                                },
+                                new VehicleLocation
+                                {
+                                    VehicleID = 3,
+                                    LocationID = 1,
+                                },
+                                new VehicleLocation
+                                {
+                                    VehicleID = 4,
+                                    LocationID = 5
+                                },
+                                new VehicleLocation
+                                {
+                                    VehicleID = 4,
+                                    LocationID = 1
+                                },
+                                new VehicleLocation
+                                {
+                                    VehicleID = 1,
+                                    LocationID = 3
+                                }
+
+                            );
+                            context.SaveChanges();
+                        }
+
+                        //Seed Any Rentals if there arent any
+                        if (!context.Rentals.Any())
+                        {
+                            context.Rentals.AddRange(
+                                new Rental
+                                {
+                                    RentalNumber = "KK29RVS87L9",
+                                    PickupDate = DateTime.Parse("2026-10-18"),
+                                    ReturnDate = null,
+                                    CustomerID = context.Customers.First(c =>
+                                        c.FirstName == "Barney" && c.LastName == "Rubble").ID,
+                                    EmployeeID = null
+                                },
+                                new Rental
+                                {
+                                    RentalNumber = "FR2026101901",
+                                    PickupDate = DateTime.Parse("2026-10-19"),
+                                    ReturnDate = DateTime.Parse("2026-10-22"),
+                                    CustomerID = context.Customers.First(c =>
+                                        c.FirstName == "Fred" && c.LastName == "Flintstone").ID,
+                                    EmployeeID = context.Employees.First(e =>
+                                        e.FirstName == "Gregory" && e.LastName == "House").ID
+                                },
+                                new Rental
+                                {
+                                    RentalNumber = "WR2026102001",
+                                    PickupDate = DateTime.Parse("2026-10-20"),
+                                    ReturnDate = null,
+                                    CustomerID = context.Customers.First(c =>
+                                        c.FirstName == "Wilma" && c.LastName == "Flintstone").ID,
+                                    EmployeeID = context.Employees.First(e =>
+                                        e.FirstName == "Doogie" && e.LastName == "Houser").ID
+                                },
+                                new Rental
+                                {
+                                    RentalNumber = "JD2026102101",
+                                    PickupDate = DateTime.Parse("2026-10-21"),
+                                    ReturnDate = DateTime.Parse("2026-10-24"),
+                                    CustomerID = context.Customers.First(c =>
+                                        c.FirstName == "Jane" && c.LastName == "Doe").ID,
+                                    EmployeeID = context.Employees.First(e =>
+                                        e.FirstName == "Charles" && e.LastName == "Xavier").ID
+                                }
+
+                            );
+                        }
+                        context.SaveChanges();
                     }
                     catch (Exception ex)
                     {

@@ -74,6 +74,9 @@ namespace CarRental.Models
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
 
+        //Navigation Properties
         public ICollection<Reservation> Reservations { get; set; } = new HashSet<Reservation>();
+
+        public ICollection<Rental> Rentals { get; set; } = new HashSet<Rental>();
     }
 }
