@@ -56,4 +56,5 @@ using (var scope = app.Services.CreateScope())
         UseMigrations: true, SeedSampleData: true);
 }
 
+
 app.Run();
