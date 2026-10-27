@@ -46,6 +46,18 @@
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Location.Name)
         </dd>
+        <dt class="col-sm-2">
+            Customer(s)
+        </dt>
+        <dd class="col-sm-10">
+            @foreach (var cr in Model.CustomerReservations)
+            {
+                <div>
+                    @cr.Customer.FirstName @cr.Customer.LastName
+                </div>
+            }
+        </dd>
+
     </dl>
 </div>
 <div>

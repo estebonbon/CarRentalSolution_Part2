@@ -4,6 +4,7 @@ using CarRental.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Mono.TextTemplating;
 
 public class CustomerController : Controller
 {
@@ -15,14 +16,106 @@ public class CustomerController : Controller
     }
 
     // GET: CUSTOMER
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index(string? SearchString, int? MembershipTypeID, string? actionButton, string sortDirection = "asc", string sortField = "Customer")    
     {
-        var customers = await _context.Customers
-                            .Include(c => c.MembershipType)
-                            .AsNoTracking()
-                            .ToListAsync();
 
-        return View(customers);
+        //List of sort options for the columns
+        //Must matcht the column headings
+        string[] sortOptions = new[] { "Customer", "MembershipType" };
+
+        //Add the count
+        ViewData["Filtering"] = "btn-outline-secondary";
+        int numberFilters = 0; //Start the variable at zero
+        var customers = _context.Customers
+                            .Include(c => c.MembershipType)
+                            .AsNoTracking();
+                            
+
+        //Suplies the dropdown 
+        ViewData["MembershipTypeID"] = new SelectList(
+            _context.MembershipTypes,
+            "ID",
+            "Name"
+        );
+
+        if (MembershipTypeID.HasValue)
+        {
+            customers = customers.Where(c => c.MembershipTypeID == MembershipTypeID);
+            numberFilters++;
+        }
+        if (!String.IsNullOrEmpty(SearchString))
+        {
+            customers = customers.Where(c => c.LastName.ToUpper().Contains(SearchString.ToUpper()) || 
+                                    c.FirstName.ToUpper().Contains(SearchString.ToUpper()) ||
+                                    c.DriverLicense.ToUpper().Contains(SearchString.ToUpper()));
+            numberFilters++;
+        }
+
+        //Give feedback on the state of the filters
+        if (numberFilters != 0)
+        {
+            // Toggle the Open/ Closed state of the collapse depending on if we are filtering
+            ViewData["Filtering"] = " btn-danger";
+            //Show how many filters have been applied
+            ViewData["numberFilters"] = "(" + numberFilters.ToString()
+                + " Filter" + (numberFilters > 1 ? "s" : "") + " Applied)";
+            //Keep the Bootstrap collapse open
+            @ViewData["ShowFilter"] = " show";
+        }
+
+        //Before we sort, see if we have called for a change of filtering or sorting
+        if (!String.IsNullOrEmpty(actionButton)) //Form Submitted!
+        {
+            //page = 1;//Reset page to start
+
+            if (sortOptions.Contains(actionButton))//Change of sort is requested
+            {
+                if (actionButton == sortField) //Reverse order on same field
+                {
+                    sortDirection = sortDirection == "asc" ? "desc" : "asc";
+                }
+                sortField = actionButton;//Sort by the button clicked
+            }
+        }
+        if (sortField == "Customer")
+        {
+            if (sortDirection == "asc")
+            {
+                customers = customers
+                    .OrderBy(c => c.LastName)
+                    .ThenBy(c => c.FirstName);
+            }
+            else
+            {
+                customers = customers
+                    .OrderByDescending(c => c.LastName)
+                    .ThenBy(c => c.FirstName);
+            }
+        }
+
+        if (sortField == "MembershipType")
+        {
+            if (sortDirection == "asc")
+            {
+                customers = customers
+                    .OrderBy(c => c.MembershipType.Name)
+                    .ThenBy(c => c.LastName)
+                    .ThenBy(c => c.FirstName);
+            }
+            else
+            {
+                customers = customers
+                    .OrderByDescending(c => c.MembershipType.Name)
+                    .ThenBy(c => c.LastName)
+                    .ThenBy(c => c.FirstName);
+            }
+        }
+
+        //Remeber the sort for the next request
+        ViewData["sortField"] = sortField;
+        ViewData["sortDirection"] = sortDirection;
+        //return View(customers); 
+        return View(await customers.ToListAsync()); //This makes that filtering happen first and then the customers are displayed, ListAsync makes it wait
     }
 
     // GET: CUSTOMER/Details/5
@@ -35,6 +128,8 @@ public class CustomerController : Controller
 
         var customer = await _context.Customers
             .Include(c => c.MembershipType)
+            .Include(c => c.CustomerReservations)
+                .ThenInclude(r => r.Reservation)// This part is for Part 2b, step F
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.ID == id);
 
@@ -203,8 +298,19 @@ public class CustomerController : Controller
         }
         catch (DbUpdateException)
         {
-            //Note: there is really no reason a delete should fail if you can "talk" to the database.
-            ModelState.AddModelError("", "Unable to delete record. Try again, and if the problem persists see your system administrator.");
+            //This if for the user friendly message in step 2g
+            if (await _context.CustomerReservations
+                .AnyAsync(cr => cr.CustomerID == id)) //Check if there are any exsisting reservations
+            {
+                ModelState.AddModelError("",
+                    "Cannot delete this Customer because they have existing Reservations.");
+            }
+            else
+            {
+                //Note: there is really no reason a delete should fail if you can "talk" to the database.
+                ModelState.AddModelError("", "Unable to delete record. Try again, and if the problem persists see your system administrator.");
+            }
+            
         }
         return View(customer);
     }

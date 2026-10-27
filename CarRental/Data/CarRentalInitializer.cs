@@ -322,14 +322,166 @@ namespace CarRental.Data
                                 Status = Status.Cancelled,
                                 EmployeeID = context.Employees.FirstOrDefault(e => e.FirstName == "Charles" && e.LastName == "Xavier").ID,
                                 LocationID = context.Locations.FirstOrDefault(l => l.Name == "Louth Auto").ID
-                            });
+                            },
+                            new Reservation
+                            {
+                                ReservationNumber = "CR-1005",
+                                PickupDate = DateTime.Today.AddDays(3).AddHours(10),
+                                ReturnDate = DateTime.Today.AddDays(7).AddHours(10),
+                                Status = Status.Confirmed,
+                                EmployeeID = context.Employees.First(e => e.LastName == "Stark").ID,
+                                LocationID = context.Locations.First(l => l.Name == "Thorold Car Rentals").ID
+                            },
+                            new Reservation
+                            {
+                                ReservationNumber = "CR-1006",
+                                PickupDate = DateTime.Today.AddDays(8).AddHours(9),
+                                ReturnDate = DateTime.Today.AddDays(11).AddHours(17),
+                                Status = Status.Pending,
+                                EmployeeID = context.Employees.First(e => e.LastName == "Wayne").ID,
+                                LocationID = context.Locations.First(l => l.Name == "Hamilton Vehicle Rentals").ID
+                            },
+                            new Reservation
+                            {
+                                ReservationNumber = "CR-1007",
+                                PickupDate = DateTime.Today.AddDays(12).AddHours(11),
+                                ReturnDate = DateTime.Today.AddDays(17).AddHours(11),
+                                Status = Status.Confirmed,
+                                EmployeeID = context.Employees.First(e => e.FirstName == "Gregory" && e.LastName == "House").ID,
+                                LocationID = context.Locations.First(l => l.Name == "Welland Auto Rentals").ID
+                            },
+                            new Reservation
+                            {
+                                ReservationNumber = "CR-1008",
+                                PickupDate = DateTime.Today.AddDays(18).AddHours(14),
+                                ReturnDate = DateTime.Today.AddDays(20).AddHours(14),
+                                Status = Status.Pending,
+                                EmployeeID = context.Employees.First(e => e.FirstName == "Doogie" && e.LastName == "Houser").ID,
+                                LocationID = context.Locations.First(l => l.Name == "Niagara Car Rentals").ID
+                            },
+                            new Reservation
+                            {
+                                ReservationNumber = "CR-1009",
+                                PickupDate = DateTime.Today.AddDays(21).AddHours(8),
+                                ReturnDate = DateTime.Today.AddDays(28).AddHours(8),
+                                Status = Status.Confirmed,
+                                EmployeeID = context.Employees.First(e => e.LastName == "Xavier").ID,
+                                LocationID = context.Locations.First(l => l.Name == "Louth Auto").ID
+                            },
+                            new Reservation
+                            {
+                                ReservationNumber = "CR-1010",
+                                PickupDate = DateTime.Today.AddDays(25).AddHours(12),
+                                ReturnDate = DateTime.Today.AddDays(29).AddHours(12),
+                                Status = Status.Pending,
+                                EmployeeID = context.Employees.First(e => e.LastName == "Stark").ID,
+                                LocationID = context.Locations.First(l => l.Name == "Thorold Car Rentals").ID
+                            }
+                            );
+
+
                             context.SaveChanges();
                         }
 
-                        
-                        
+                        // Seed CustomerReservations 2B
+                        if (!context.CustomerReservations.Any())
+                        {
+                            context.CustomerReservations.AddRange(
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Jane" && c.LastName == "Doe").ID,
+
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1001").ID
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Wilma" && c.LastName == "Flintstone").ID, //Customer 2 Reservation
+
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1002").ID,
+
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Wilma" && c.LastName == "Flintstone").ID, //Customer 2 Reservations
+
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1003").ID
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Fred" && c.LastName == "Flintstone").ID,
+
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1001").ID  //One reservation with 2 customer
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Barney" && c.LastName == "Rubble").ID,
+                                
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1004").ID
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Jane" && c.LastName == "Doe").ID,
+                                
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1005").ID
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Fred" && c.LastName == "Flintstone").ID,
+                                
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1006").ID
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Wilma" && c.LastName == "Flintstone").ID,
+                                
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1007").ID
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Barney" && c.LastName == "Rubble").ID,
+                                
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1008").ID
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Jane" && c.LastName == "Doe").ID,
+                                
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1009").ID
+                                },
+                                new CustomerReservation
+                                {
+                                    CustomerID = context.Customers
+                                        .First(c => c.FirstName == "Fred" && c.LastName == "Flintstone").ID,
+                                
+                                    ReservationID = context.Reservations
+                                        .First(r => r.ReservationNumber == "CR-1010").ID
+                                }
+                            );
+                            context.SaveChanges();
+                        }
+
                         //Seed the Vechiles if there arent any
-                        if(!context.Vehicles.Any())
+                        if (!context.Vehicles.Any())
                         {
                             context.Vehicles.AddRange(
                                 new Vehicle

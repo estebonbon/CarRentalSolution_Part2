@@ -26,6 +26,8 @@ namespace CarRental.Data
 
         public DbSet<Rental> Rentals { get; set; }
 
+        public DbSet<CustomerReservation> CustomerReservations { get; set; } //2B
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Add a unique index to the Reservation Number
@@ -103,6 +105,21 @@ namespace CarRental.Data
                 .HasForeignKey(r => r.LocationID)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            //ModelBuilder for Part 2B
+            modelBuilder.Entity<Customer>()
+                .HasMany(c => c.CustomerReservations) //ICollection
+                .WithOne(cr => cr.Customer)
+                .HasForeignKey(cr => cr.CustomerID)
+                .OnDelete(DeleteBehavior.Restrict); //Wont allow Customers to be deleted who have reservations
+
+            modelBuilder.Entity<Reservation>()
+                .HasMany(r => r.CustomerReservations) //ICollection
+                .WithOne(cr => cr.Reservation)
+                .HasForeignKey(cr => cr.ReservationID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomerReservation>()
+                .HasKey(t => new { t.CustomerID, t.ReservationID }); //This creates the composite key
 
         }
     }

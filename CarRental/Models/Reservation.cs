@@ -51,6 +51,8 @@ namespace CarRental.Models
 
         public Location? Location { get; set; }
 
+        //Navigation Properties 2B
+        public ICollection<CustomerReservation> CustomerReservations { get; set; } = new HashSet<CustomerReservation>();
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

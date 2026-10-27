@@ -1,8 +1,9 @@
 
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using CarRental.Models;
 using CarRental.Data;
+using CarRental.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 public class EmployeeController : Controller
 {
@@ -14,13 +15,101 @@ public class EmployeeController : Controller
     }
 
     // GET: EMPLOYEE
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index(string? SearchString, bool? Active, string actionButton, string sortField = "Name", string sortDirection = "asc")    
     {
-        var employees = await _context.Employees
-                        .AsNoTracking()
-                        .ToListAsync();
+        //Create the sort options
+        string[] sortOptions = new[] { "Name", "Hire Date" };
 
-        return View(employees);
+        //Add the Count
+        ViewData["Filtering"] = "btn-outline-secondary";
+        int numberFilters = 0; //Start the variable at zero
+
+        var employees = _context.Employees
+                        .AsNoTracking();
+            //.ToListAsync();
+
+        //Create the dropdown Revisit this LATER
+        ViewData["Active"] = new SelectList(new[]
+            {
+                new { Value = "true", Text = "Active" },
+                new { Value = "false", Text = "Inactive" }
+            }, "Value", "Text");
+
+        //These provide functionality for the drop downs
+        if (Active.HasValue)
+        {
+            employees = employees.Where(e => e.IsActive == Active.Value);
+            numberFilters++;
+        }
+
+        //Search Feature
+        if (!String.IsNullOrEmpty(SearchString))
+        {
+            employees = employees.Where(e => e.FirstName.ToUpper().Contains(SearchString.ToUpper())
+                || e.LastName.ToUpper().Contains(SearchString.ToUpper()));
+            numberFilters++;
+        }
+
+        //Give feedback on the state of the filters
+        if (numberFilters != 0)
+        {
+            // Toggle the Open/ Closed state of the collapse depending on if we are filtering
+            ViewData["Filtering"] = " btn-danger";
+            //Show how many filters have been applied
+            ViewData["numberFilters"] = "(" + numberFilters.ToString()
+                + " Filter" + (numberFilters > 1 ? "s" : "") + " Applied)";
+            //Keep the Bootstrap collapse open
+            @ViewData["ShowFilter"] = " show";
+        }
+
+        //Before we sort, see if we have called for a change of filtering or sorting
+        if (!String.IsNullOrEmpty(actionButton)) //Form Submitted!
+        {
+            //page = 1;//Reset page to start
+
+            if (sortOptions.Contains(actionButton))//Change of sort is requested
+            {
+                if (actionButton == sortField) //Reverse order on same field
+                {
+                    sortDirection = sortDirection == "asc" ? "desc" : "asc";
+                }
+                sortField = actionButton;//Sort by the button clicked
+            }
+        }
+        if (sortField == "Name")
+        {
+            if (sortDirection == "asc")
+            {
+                employees = employees
+                    .OrderBy(e => e.LastName)
+                    .ThenBy(e => e.FirstName);
+            }
+            else
+            {
+                employees = employees
+                    .OrderByDescending(e => e.LastName)
+                    .ThenBy(e => e.FirstName);
+
+            }
+        }
+
+        if (sortField == "Hire Date")
+        {
+            if (sortDirection == "asc")
+            {
+                employees = employees.OrderBy(e => e.HireDate);
+            }
+            else
+            {
+                employees = employees.OrderByDescending(e => e.HireDate);
+            }
+        }
+
+        //Remeber the sort for the next request
+        ViewData["sortField"] = sortField;
+        ViewData["sortDirection"] = sortDirection;
+
+        return View(await employees.ToListAsync());
     }
 
     // GET: EMPLOYEE/Details/5

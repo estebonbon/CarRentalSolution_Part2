@@ -1,9 +1,11 @@
-
 using CarRental.Data;
 using CarRental.Models;
+using CarRental.ViewModels; //Part 2b
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Security.AccessControl;
 
 public class ReservationController : Controller
 {
@@ -20,16 +22,21 @@ public class ReservationController : Controller
         var reservations = await _context.Reservations
             .Include(r => r.Employee)
             .Include(r => r.Location) //New
+            .Include(r => r.CustomerReservations)
+                .ThenInclude(cr => cr.Customer) //Part 2B new
             .AsNoTracking()
             .ToListAsync();
 
         return View(reservations);
     }
     // GET: RESERVATION/Create
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        Reservation reservation = new Reservation(); //This is the reservation that will get passed into the create list
+        
+        await MakeCustomerListAsync(reservation); // kNw the list of Customers can be created
         PopulateDropDownLists();
-        return View();
+        return View(reservation);
     }
 
     // POST: RESERVATION/Create
@@ -37,10 +44,22 @@ public class ReservationController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,ReservationNumber,PickupDate,ReturnDate,Status,EmployeeID,LocationID")] Reservation reservation)
+    public async Task<IActionResult> Create([Bind("ID,ReservationNumber,PickupDate,ReturnDate,Status,EmployeeID,LocationID")] Reservation reservation, string[] selectedOptions)
     {
         try
         {
+            if (selectedOptions == null || selectedOptions.Length == 0)
+            {
+                ModelState.AddModelError("",
+                    "You must select at least one Customer.");
+            }
+            else
+            {
+                await UpdateCustomerListAsync(selectedOptions, reservation);
+            }
+
+
+
             if (ModelState.IsValid)
             {
                 _context.Add(reservation);
@@ -60,6 +79,7 @@ public class ReservationController : Controller
             }
         }
 
+        await MakeCustomerListAsync(reservation);
         PopulateDropDownLists(reservation);
         return View(reservation);
     }
@@ -75,13 +95,15 @@ public class ReservationController : Controller
         var reservation = await _context.Reservations
             .Include(r => r.Employee) //This is for a drop down
             .Include(r => r.Location) //Also for a drop down
+            .Include(r => r.CustomerReservations)
+                .ThenInclude(c => c.Customer)//This will be used for the SelectBoxes
             .FirstOrDefaultAsync(m => m.ID == id);
 
         if (reservation == null)
         {
             return NotFound();
         }
-
+        await MakeCustomerListAsync(reservation);
         PopulateDropDownLists(reservation);
         return View(reservation);
     }
@@ -91,11 +113,13 @@ public class ReservationController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id)
+    public async Task<IActionResult> Edit(int id, string[] selectedOptions)
     {
         //Go get the reservation to update
         var reservationToUpdate = await _context.Reservations
             .Include(r => r.Employee)
+            .Include(r => r.CustomerReservations)
+                .ThenInclude(c => c.CustomerID)//This will be used for the SelectBoxes
             .FirstOrDefaultAsync(m => m.ID == id);
 
         //Check that you got it or exit with a not found error
@@ -103,6 +127,8 @@ public class ReservationController : Controller
         {
             return NotFound();
         }
+
+        await UpdateCustomerListAsync(selectedOptions, reservationToUpdate);
 
         //Try updating it with the values posted
         if (await TryUpdateModelAsync<Reservation>(reservationToUpdate, "",
@@ -112,7 +138,13 @@ public class ReservationController : Controller
             try
             {
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Details", new { reservationToUpdate.ID  });
+                //return RedirectToAction(nameof(Index));
+            }
+            catch (RetryLimitExceededException /* dex */)//This is a Transaction in the Database!
+            {
+                ModelState.AddModelError("", "Unable to save changes after multiple attempts. " +
+                    "Try again, and if the problem persists, see your system administrator.");
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -137,6 +169,9 @@ public class ReservationController : Controller
                 }
             }
         }
+
+        //Redirect the user incase there was a validation error
+        await MakeCustomerListAsync(reservationToUpdate);
         PopulateDropDownLists(reservationToUpdate);
         return View(reservationToUpdate);
     }
@@ -152,6 +187,8 @@ public class ReservationController : Controller
         var reservation = await _context.Reservations
             .Include(r => r.Employee)
             .Include(r => r.Location)
+            .Include(r => r.CustomerReservations)
+                .ThenInclude(cr => cr.Customer) //Part 2B NEW
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.ID == id);
 
@@ -174,6 +211,8 @@ public class ReservationController : Controller
         var reservation = await _context.Reservations
             .Include(r => r.Employee)
             .Include(r => r.Location)
+            .Include(r => r.CustomerReservations)
+                .ThenInclude(cr => cr.Customer) //Part 2b
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.ID == id);
 
@@ -238,5 +277,85 @@ public class ReservationController : Controller
     private bool ReservationExists(int? id)
     {
         return _context.Reservations.Any(e => e.ID == id);
+    }
+
+
+    //SECTION FOR CREATING CUSTOMER LISTS
+    private async Task MakeCustomerListAsync(Reservation reservation)
+    {
+        var allCustomers = await _context.Customers  //Grab all exsisting customers put them in this variable
+            .OrderBy(c => c.LastName)
+            .ThenBy(c => c.FirstName)
+            .ToListAsync();
+
+        var assignedCustomer = new HashSet<int>(
+            reservation.CustomerReservations.Select(cr => cr.CustomerID)) ?? Enumerable.Empty<int>(); //?? the double ? means here is a backup incase it is null
+
+        //Makes two seperate lists we are going to compare
+        var selected = new List<ListOptionVM>();
+        var available = new List<ListOptionVM>();
+
+        foreach (var customer in allCustomers)
+        {
+            var option = new ListOptionVM() //One instance of the object
+            {
+                ID = customer.ID,
+                DisplayText = customer.FirstName + " " + customer.LastName
+            };
+
+            if(assignedCustomer.Contains(customer.ID))
+            {
+                selected.Add(option); //This is where that option object with ID and Name get sent to the list named "selected"
+            }
+            else
+            {
+                available.Add(option); //This is where any options not selected get sent to the other list
+            }
+        }
+
+        //Send both Lists to the ViewData Dictionary
+        ViewData["selectCust"] = new MultiSelectList(selected, "ID", "DisplayText");
+        ViewData["availCust"] = new MultiSelectList(available, "ID", "DisplayText");
+    }
+
+    private async Task UpdateCustomerListAsync(string[] selectedOptions, Reservation reservationToUpdate)
+    {
+        if(selectedOptions == null || selectedOptions.Length == 0)
+        {
+            //reservationToUpdate.CustomerReservations = new List<CustomerReservation>(); // Create an empty list with no customers and then stops the method Every Reservation must have at least one customer
+            return;
+        }
+
+        var selectedIds = selectedOptions.Select(int.Parse).ToHashSet(); //Converts string into intergers
+        var currentIds = reservationToUpdate.CustomerReservations.Select(cr => cr.CustomerID).ToHashSet(); // Goes through the current Reservation Relationship to retrieve the CustomerID
+
+        var allCustomers = await _context.Customers.ToListAsync(); //Grabs all the customer objects, loops through ever possinle pssibility
+
+        foreach(var customer in allCustomers)
+        {
+            var customerID = customer.ID; //Saves it to the variable
+            var isSelected = selectedIds.Contains(customerID); //This will store a bool value
+            var isAssigned = currentIds.Contains(customerID); //This again checks whether the current reservation object has this customer linked to it
+
+            if(isSelected &&  !isAssigned)
+            {
+                reservationToUpdate.CustomerReservations.Add(new CustomerReservation
+                {
+                    CustomerID = customerID,
+                    ReservationID = reservationToUpdate.ID // The reservationID is the ID of the current ReservationObject we are trying to update
+                });
+            }
+
+            if (!isSelected && isAssigned)
+            {
+                var toRemove = reservationToUpdate.CustomerReservations.FirstOrDefault(cr => cr.CustomerID == customer.ID); //Go look in the ICollection find the matching IDs and store that relatioship in ToRemove
+
+                if (toRemove != null)
+                {
+                    _context.CustomerReservations.Remove(toRemove); //This removes it from that database
+                }
+            }
+        }
+
     }
 }

@@ -8,11 +8,11 @@
 
 <h4>Reservation</h4>
 <hr />
+<form asp-action="Edit">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="ID" />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="ID" />
             <div class="form-group">
                 <label asp-for="ReservationNumber" class="control-label"></label>
                 <input asp-for="ReservationNumber" class="form-control" />
@@ -50,12 +50,44 @@
 
                 <span asp-validation-for="LocationID" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+            <div class="col-md-12">
+                <div class="row">
+
+                    <div class="form-group col-md-6">
+                        <label class="control-label">Selected Customers</label>
+
+                        <button type="button" id="btnArrowMinus"
+                                class="btn btn-danger btn-sm">
+                            <strong>-</strong>
+                        </button>
+
+                        @Html.ListBox("selectedOptions",
+                            (MultiSelectList)ViewBag.selectCust,
+                            new { size = 10, @class = "form-control" })
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label class="control-label">Available Customers</label>
+
+                        <button type="button" id="btnArrowPlus"
+                                class="btn btn-success btn-sm">
+                            <strong>+</strong>
+                        </button>
+
+                        @Html.ListBox("availOptions",
+                            (MultiSelectList)ViewBag.availCust,
+                            new { size = 10, @class = "form-control" })
+                    </div>
+                </div>
             </div>
-        </form>
+
+
+        </div>
     </div>
-</div>
+            <div class="form-group">
+                <input type="submit" value="Save" id="btnSubmit" class="btn btn-primary" />
+            </div>
+</form>
 
 <div>
     <a asp-action="Index">Back to List</a>
@@ -64,5 +96,7 @@
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
+
+        <script src="~/js/multiselect.js"></script>
     }
 }

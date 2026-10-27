@@ -30,6 +30,9 @@
             <th>
                 Location
             </th>
+            <th>
+                Customer(s)
+            </th>
         </tr>
     </thead>
     <tbody>
@@ -54,6 +57,53 @@
                 <td>
                     @Html.DisplayFor(model => item.Location.Name)
                 </td>
+
+                <td>
+                    @{
+                        int customerCount = item.CustomerReservations.Count;
+
+                        if (customerCount > 0)
+                        {
+                            var customers = item.CustomerReservations.ToList();
+
+                            string firstCustomer =
+                                customers[0].Customer.FirstName + " " +
+                                customers[0].Customer.LastName;
+
+                            if (customerCount > 1)
+                            {
+                                <a role="button"
+                                   data-bs-toggle="collapse"
+                                   href="#collapseCustomers@(item.ID)"
+                                   aria-expanded="false"
+                                   aria-controls="collapseCustomers@(item.ID)">
+
+                                    @firstCustomer
+                                    <span class="badge bg-info">@customerCount</span>
+                                </a>
+
+                                <div class="collapse" id="collapseCustomers@(item.ID)">
+                                    @for (int i = 1; i < customerCount; i++)
+                                    {
+                                        <div>
+                                            @customers[i].Customer.FirstName
+                                            @customers[i].Customer.LastName
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                @firstCustomer
+                            }
+                        }
+                        else
+                        {
+                            @:None
+                        }
+                    }
+                </td>
+
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
                     <a asp-action="Details" asp-route-id="@item.ID">Details</a> |

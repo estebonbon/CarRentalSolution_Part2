@@ -15,7 +15,7 @@ namespace CarRental.Data.CRMigrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
             modelBuilder.Entity("CarRental.Models.Customer", b =>
                 {
@@ -66,6 +66,21 @@ namespace CarRental.Data.CRMigrations
                     b.HasIndex("MembershipTypeID");
 
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("CarRental.Models.CustomerReservation", b =>
+                {
+                    b.Property<int>("CustomerID")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ReservationID")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("CustomerID", "ReservationID");
+
+                    b.HasIndex("ReservationID");
+
+                    b.ToTable("CustomerReservations");
                 });
 
             modelBuilder.Entity("CarRental.Models.Employee", b =>
@@ -307,6 +322,25 @@ namespace CarRental.Data.CRMigrations
                     b.Navigation("MembershipType");
                 });
 
+            modelBuilder.Entity("CarRental.Models.CustomerReservation", b =>
+                {
+                    b.HasOne("CarRental.Models.Customer", "Customer")
+                        .WithMany("CustomerReservations")
+                        .HasForeignKey("CustomerID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CarRental.Models.Reservation", "Reservation")
+                        .WithMany("CustomerReservations")
+                        .HasForeignKey("ReservationID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Reservation");
+                });
+
             modelBuilder.Entity("CarRental.Models.Rental", b =>
                 {
                     b.HasOne("CarRental.Models.Customer", "Customer")
@@ -365,6 +399,8 @@ namespace CarRental.Data.CRMigrations
 
             modelBuilder.Entity("CarRental.Models.Customer", b =>
                 {
+                    b.Navigation("CustomerReservations");
+
                     b.Navigation("Rentals");
                 });
 
@@ -385,6 +421,11 @@ namespace CarRental.Data.CRMigrations
             modelBuilder.Entity("CarRental.Models.MembershipType", b =>
                 {
                     b.Navigation("Customers");
+                });
+
+            modelBuilder.Entity("CarRental.Models.Reservation", b =>
+                {
+                    b.Navigation("CustomerReservations");
                 });
 
             modelBuilder.Entity("CarRental.Models.Vehicle", b =>

@@ -84,6 +84,8 @@ namespace CarRental.Models
         //Navigation Properties
         public ICollection<Rental> Rentals { get; set; } = new HashSet<Rental>();
 
+        public ICollection<CustomerReservation> CustomerReservations { get; set; } = new HashSet<CustomerReservation>(); //2B
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (DOB.Date > DateTime.Today)
