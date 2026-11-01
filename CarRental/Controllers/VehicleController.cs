@@ -61,7 +61,7 @@ public class VehicleController : Controller
         {
             vehicles = vehicles.Where(v => v.Make == Make);
             numberFilters++;
-        }
+    }
         if (!string.IsNullOrEmpty(Model))
         {
             vehicles = vehicles.Where(v => v.Model == Model);
@@ -81,7 +81,7 @@ public class VehicleController : Controller
 
         //Give feedback on the state of the filters
         if (numberFilters != 0)
-        {
+    {
             // Toggle the Open/ Closed state of the collapse depending on if we are filtering
             ViewData["Filtering"] = " btn-danger";
             //Show how many filters have been applied
@@ -123,7 +123,7 @@ public class VehicleController : Controller
         if (sortField == "Model")
         {
             if (sortDirection == "asc")
-            {
+        {
                 vehicles = vehicles
                     .OrderBy(v => v.Model)
                     .ThenBy(v => v.Make);
@@ -143,7 +143,7 @@ public class VehicleController : Controller
                     .OrderBy(v => v.Year);
             }
             else
-            {
+                {
                 vehicles = vehicles
                     .OrderByDescending(v => v.Year);
             }
@@ -154,9 +154,9 @@ public class VehicleController : Controller
             {
                 vehicles = vehicles
                     .OrderBy(v => v.DailyRate);
-            }
+}
             else
-            {
+    {
                 vehicles = vehicles
                     .OrderByDescending(v => v.DailyRate);
             }
