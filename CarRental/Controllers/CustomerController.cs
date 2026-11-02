@@ -217,8 +217,8 @@ public class CustomerController : ElephantController
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id)
+    [ValidateAntiForgeryToken] //Byte RowVersion Added for Part2C step 3
+    public async Task<IActionResult> Edit(int id, Byte[] RowVersion)
     {
         //Go get the customer to update
         var customerToUpdate = await _context.Customers
@@ -231,6 +231,9 @@ public class CustomerController : ElephantController
             return NotFound();
         }
 
+        ///PART 2C, Step 3, Add the RowVersion to the customerToUpdate object
+        _context.Entry(customerToUpdate).Property("RowVersion").OriginalValue = RowVersion; //Sets the original RowVersion from the Edit form so Entity Framework can compare it with the database version when saving. If they don't match, a concurrency exception is thrown.
+
         //Try updating it with the values posted
         if (await TryUpdateModelAsync<Customer>(customerToUpdate, "",
             c => c.FirstName, c => c.MiddleName, c => c.LastName, c => c.Phone,
@@ -242,17 +245,94 @@ public class CustomerController : ElephantController
                 //return RedirectToAction(nameof(Index)); changed
                 return RedirectToAction("Details", new { customerToUpdate.ID });
             }
-            catch (DbUpdateConcurrencyException)
+
+            catch (DbUpdateConcurrencyException ex) // Added for concurrency, thrown by SaveChangesAsync 
             {
-                if (!CustomerExists(customerToUpdate.ID))
+                var exceptionEntry = ex.Entries.Single();
+
+                var clientValues = (Customer)exceptionEntry.Entity;
+
+                var databaseEntry = exceptionEntry.GetDatabaseValues();
+
+                if (databaseEntry == null)
                 {
-                    return NotFound();
+                    ModelState.AddModelError("",
+                        "Unable to save changes. The Customer was deleted by another user.");
                 }
                 else
                 {
-                    throw;
+                    var databaseValues = (Customer)databaseEntry.ToObject();
+
+                    // Compare the values submitted by the user
+                    // against the current values in the database.
+
+                    if (databaseValues.FirstName != clientValues.FirstName)
+                    {
+                        ModelState.AddModelError(
+                            "FirstName", "Current value: " + databaseValues.FirstName);
+                    }
+
+                    if (databaseValues.MiddleName != clientValues.MiddleName)
+                    {
+                        ModelState.AddModelError(
+                            "MiddleName", "Current value: " + databaseValues.MiddleName);
+                    }
+
+                    if (databaseValues.LastName != clientValues.LastName)
+                    {
+                        ModelState.AddModelError(
+                            "LastName", "Current value: " + databaseValues.LastName);
+                    }
+
+                    if (databaseValues.Phone != clientValues.Phone)
+                    {
+                        ModelState.AddModelError(
+                            "Phone", "Current value: " + databaseValues.PhoneFormatted);
+                    }
+
+                    if (databaseValues.Email != clientValues.Email)
+                    {
+                        ModelState.AddModelError(
+                            "Email", "Current value: " + databaseValues.Email);
+                    }
+
+                    if (databaseValues.DriverLicense != clientValues.DriverLicense)
+                    {
+                        ModelState.AddModelError(
+                            "DriversLicense", "Current value: " + databaseValues.DriverLicense);
+                    }
+
+                    if (databaseValues.DOB != clientValues.DOB)
+                    {
+                        ModelState.AddModelError(
+                            "DOB", "Current value: " + databaseValues.DOB);
+                    }
+
+                    if (databaseValues.MembershipTypeID != clientValues.MembershipTypeID)
+                    {
+                        //Creates a variable to hold the current value of the MembershipTypeID in the database, so that it can be displayed to the user in the error message.
+                        MembershipType? databaseMembership = await _context.MembershipTypes
+                            .FirstOrDefaultAsync(m => m.ID == databaseValues.MembershipTypeID);
+
+                        ModelState.AddModelError(
+                            "MembershipTypeID", "Current value: " + databaseMembership?.Name);
+                    }
+
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "The record you attempted to edit was modified by another user " +
+                        "after you received your values. The edit operation was canceled " +
+                        "and the current values in the database have been displayed. " +
+                        "If you still want to save your version of this record, " +
+                        "click the Save button again. Otherwise click the " +
+                        "'Back to Customer List' hyperlink.");
+
+                    // Refresh the RowVersion using the database value
+                    customerToUpdate.RowVersion = databaseValues.RowVersion ?? Array.Empty<byte>();
+                    ModelState.Remove("RowVersion");
                 }
             }
+
             catch (DbUpdateException dex)
             {
                 if (dex.GetBaseException().Message.Contains("UNIQUE constraint failed: Customers.DriverLicense"))

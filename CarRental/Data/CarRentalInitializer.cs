@@ -44,6 +44,31 @@ namespace CarRental.Data
                         }
                         //Here is a good place to create any additional database objects such as Triggers or Views
                         //----------------------------------------------------------------------------------------
+                        // Trigger for updating a Customer
+                        string sqlCmd = @"
+                            CREATE TRIGGER SetCustomerTimestampOnUpdate
+                            AFTER UPDATE ON Customers
+                            BEGIN
+                                UPDATE Customers
+                                SET RowVersion = randomblob(8)
+                                WHERE rowid = NEW.rowid;
+                            END;
+                        ";
+                        
+                        context.Database.ExecuteSqlRaw(sqlCmd);
+
+                        // Trigger for inserting a new Customer
+                        sqlCmd = @"
+                            CREATE TRIGGER SetCustomerTimestampOnInsert
+                            AFTER INSERT ON Customers
+                            BEGIN
+                                UPDATE Customers
+                                SET RowVersion = randomblob(8)
+                                WHERE rowid = NEW.rowid;
+                            END;
+                        ";
+
+                        context.Database.ExecuteSqlRaw(sqlCmd);
                     }
                     else //The database is already created
                     {

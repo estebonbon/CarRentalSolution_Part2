@@ -75,6 +75,11 @@ namespace CarRental.Models
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime DOB { get; set; }
 
+        //Added for Part2C Concurrency Control
+        [ScaffoldColumn(false)] //Users should not edit this property directly, so it is hidden from the UI.
+        [Timestamp]
+        public byte[]? RowVersion { get; set; } //Nullable because it will be null when creating a new Customer, but will be populated when editing an existing Customer.
+
         [Required(ErrorMessage = "You must select a membership type.")]
         [Display(Name = "Membership Type")]
         public int MembershipTypeID { get; set; }
