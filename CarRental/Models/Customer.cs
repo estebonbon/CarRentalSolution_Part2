@@ -2,7 +2,7 @@
 
 namespace CarRental.Models
 {
-    public class Customer : IValidatableObject
+    public class Customer : Auditable, IValidatableObject
     {
         #region Summary Properties
 

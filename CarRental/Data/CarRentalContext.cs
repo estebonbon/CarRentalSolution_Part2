@@ -5,9 +5,42 @@ namespace CarRental.Data
 {
     public class CarRentalContext : DbContext
     {
+
+        //Give Access to IHttpContextAccessor for the Audit Data with IAuditable
+
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        //Property to hold the username
+        public string UserName
+        {
+            get; private set;
+        }
+
+        public CarRentalContext(DbContextOptions<CarRentalContext> options, IHttpContextAccessor httpContextAccessor)
+                    : base(options)
+        {
+            _httpContextAccessor = httpContextAccessor;
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                //We have a HttpContext, but there might not be anyone Authenticated
+                UserName = _httpContextAccessor.HttpContext?.User.Identity.Name;
+                UserName ??= "Unknown"; //If no one is authenticated, set the username to "Unknown"
+            }
+            else
+            {
+                //No HttpContext so seeding data
+                UserName = "Seed Data"; //Records at the beginning of the app cuased by the seed Data, will have a username called Seed Data. So the user knows how it was created.
+            }
+        }
+
         public CarRentalContext(DbContextOptions<CarRentalContext> options)
             : base(options)
         {
+            {
+                //We have a HttpContext, but there might not be anyone Authenticated
+                _httpContextAccessor = null!; //The "!" tells the program not to worry about the nullability of this variable, because we know it will be null in this case
+                UserName = "Seed Data";
+            }
         }
 
         public DbSet<Employee> Employees { get; set; }
@@ -121,6 +154,47 @@ namespace CarRental.Data
             modelBuilder.Entity<CustomerReservation>()
                 .HasKey(t => new { t.CustomerID, t.ReservationID }); //This creates the composite key
 
+        }
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            OnBeforeSaving();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            OnBeforeSaving();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+        }
+
+        //The custom method that will be called from the SaveChanges methods to set the audit data
+        private void OnBeforeSaving()
+        {
+            var entries = ChangeTracker.Entries();
+            foreach (var entry in entries)
+            {
+                if (entry.Entity is IAuditable trackable)
+                {
+                    var now = DateTime.UtcNow;
+                    switch (entry.State)
+                    {
+                        case EntityState.Modified:
+                            trackable.UpdatedOn = now;
+                            trackable.UpdatedBy = UserName;
+                            break;
+
+                        case EntityState.Added:
+                            trackable.CreatedOn = now;
+                            trackable.CreatedBy = UserName;
+                            trackable.UpdatedOn = now;
+                            trackable.UpdatedBy = UserName;
+                            break;
+                    }
+                }
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 using CarRental.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDbContext<CarRentalContext>(options =>
     options.UseSqlite(connectionString));
+
+//Add this line of code to enable the Audit Data WHAT EVEN IS SINGLETON
+builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

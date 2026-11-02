@@ -2,7 +2,7 @@
 
 namespace CarRental.Models
 {
-    public class Vehicle
+    public class Vehicle : Auditable
     {
         public int ID { get; set; }
 

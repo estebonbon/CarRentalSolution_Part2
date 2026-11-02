@@ -23,6 +23,13 @@ namespace CarRental.Data.CRMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreatedOn")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("DOB")
                         .HasColumnType("TEXT");
 
@@ -56,6 +63,13 @@ namespace CarRental.Data.CRMigrations
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");
 
                     b.HasKey("ID");
@@ -229,6 +243,13 @@ namespace CarRental.Data.CRMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreatedOn")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("EmployeeID")
                         .HasColumnType("INTEGER");
 
@@ -249,6 +270,13 @@ namespace CarRental.Data.CRMigrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("ID");
 
                     b.HasIndex("EmployeeID");
@@ -267,6 +295,13 @@ namespace CarRental.Data.CRMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreatedOn")
+                        .HasColumnType("TEXT");
+
                     b.Property<double>("DailyRate")
                         .HasColumnType("REAL");
 
@@ -283,6 +318,13 @@ namespace CarRental.Data.CRMigrations
                     b.Property<string>("Model")
                         .IsRequired()
                         .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Year")
