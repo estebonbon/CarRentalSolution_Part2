@@ -119,7 +119,7 @@ public class ReservationController : Controller
         var reservationToUpdate = await _context.Reservations
             .Include(r => r.Employee)
             .Include(r => r.CustomerReservations)
-                .ThenInclude(c => c.CustomerID)//This will be used for the SelectBoxes
+                .ThenInclude(c => c.Customer)//This will be used for the SelectBoxes
             .FirstOrDefaultAsync(m => m.ID == id);
 
         //Check that you got it or exit with a not found error

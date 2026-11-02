@@ -38,5 +38,10 @@ namespace CarRental.Models
         //Navigation Properties
         public ICollection<VehicleLocation> VehicleLocations { get; set; } = new HashSet<VehicleLocation>();
 
+        public override string ToString()
+        {
+            return $"{Year} {Make} {Model}";
+        }
+
     }
 }

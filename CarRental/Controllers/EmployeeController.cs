@@ -1,11 +1,14 @@
 
+using CarRental.CustomControllers;
 using CarRental.Data;
 using CarRental.Models;
+using CarRental.Utilities;
+using CarRental.Utilities.CarRental.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-public class EmployeeController : Controller
+public class EmployeeController : ElephantController
 {
     private readonly CarRentalContext _context;
 
@@ -15,7 +18,7 @@ public class EmployeeController : Controller
     }
 
     // GET: EMPLOYEE
-    public async Task<IActionResult> Index(string? SearchString, bool? Active, string actionButton, string sortField = "Name", string sortDirection = "asc")    
+    public async Task<IActionResult> Index(string? SearchString, bool? Active, string actionButton, int? page, int? pageSizeID, string sortField = "Name", string sortDirection = "asc")    
     {
         //Create the sort options
         string[] sortOptions = new[] { "Name", "Hire Date" };
@@ -65,7 +68,7 @@ public class EmployeeController : Controller
         //Before we sort, see if we have called for a change of filtering or sorting
         if (!String.IsNullOrEmpty(actionButton)) //Form Submitted!
         {
-            //page = 1;//Reset page to start
+            page = 1;//Reset page to start
 
             if (sortOptions.Contains(actionButton))//Change of sort is requested
             {
@@ -109,7 +112,14 @@ public class EmployeeController : Controller
         ViewData["sortField"] = sortField;
         ViewData["sortDirection"] = sortDirection;
 
-        return View(await employees.ToListAsync());
+        //Handle Paging
+        int pageSize = PageSizeHelper.SetPageSize(HttpContext, pageSizeID, ControllerName());
+        ViewData["pageSizeID"] = PageSizeHelper.PageSizeList(pageSize);
+
+        var pagedData = await PaginatedList<Employee>.CreateAsync(employees.AsNoTracking(), page ?? 1, pageSize); //Use 1 by defualt,
+
+        //return View(await employees.ToListAsync()); old version before pagedData query
+        return View(pagedData);
     }
 
     // GET: EMPLOYEE/Details/5
@@ -153,7 +163,7 @@ public class EmployeeController : Controller
             {
                 _context.Add(employee);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                RedirectToAction("Details", new { employee.ID });
             }
         }
         catch (DbUpdateException dex)
@@ -213,7 +223,7 @@ public class EmployeeController : Controller
             try
             {
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                RedirectToAction("Details", new { employeeToUpdate.ID });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -277,7 +287,13 @@ public class EmployeeController : Controller
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            var returnURL = ViewData["returnURL"]?.ToString();
+            if (string.IsNullOrEmpty(returnURL))
+            {
+                return RedirectToAction(nameof(Index)); //Incase the ELephant forgets and feel asleep
+            }
+
+            return Redirect(returnURL);
         }
         catch (DbUpdateException dex)
         {

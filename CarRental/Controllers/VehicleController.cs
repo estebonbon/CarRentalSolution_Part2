@@ -1,12 +1,15 @@
 
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using CarRental.Models;
+using CarRental.CustomControllers;
 using CarRental.Data;
-using Microsoft.Net.Http.Headers;
+using CarRental.Models;
+using CarRental.Utilities;
+using CarRental.Utilities.CarRental.Utilities;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
 
-public class VehicleController : Controller
+public class VehicleController : ElephantController
 {
     private readonly CarRentalContext _context;
 
@@ -16,9 +19,9 @@ public class VehicleController : Controller
     }
 
     // GET: VEHICLES
-    public async Task<IActionResult> Index(string? SearchString, string? Make, string? Model, int? Year, string? actionButton, string sortField = "Make", string sortDirection ="asc")    
+    public async Task<IActionResult> Index(string? SearchString, string? Make, string? Model, int? Year, string? actionButton, int? page, int? pageSizeID, string sortField = "Make", string sortDirection ="asc")    
     {
-        //return View(await _context.Vehicles.ToListAsync()); 
+        
 
         //List of sort options for the columns
         //Must match the headings
@@ -93,7 +96,7 @@ public class VehicleController : Controller
         //Before we sort, see if we have called for a change of filtering or sorting THE CODE WONT WORK WITHOUT THIS
         if (!String.IsNullOrEmpty(actionButton)) //Form Submitted!
         {
-            //page = 1;//Reset page to start
+            page = 1;//Reset page to start
 
             if (sortOptions.Contains(actionButton))//Change of sort is requested
             {
@@ -166,7 +169,13 @@ public class VehicleController : Controller
         ViewData["sortField"] = sortField;
         ViewData["sortDirection"] = sortDirection;
 
-        return View(await vehicles.ToListAsync());
+        //Handle Paging
+        int pageSize = PageSizeHelper.SetPageSize(HttpContext, pageSizeID, ControllerName());
+        ViewData["pageSizeID"] = PageSizeHelper.PageSizeList(pageSize);
+
+        var pagedData = await PaginatedList<Vehicle>.CreateAsync(vehicles.AsNoTracking(), page ?? 1, pageSize); //Use 1 by defualt,
+
+        return View(pagedData);
     }
 
     // GET: VEHICLES/Details/5
@@ -217,7 +226,7 @@ public class VehicleController : Controller
                 }
                 _context.Add(vehicle);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Details", new { vehicle.ID});
             }
             catch (DbUpdateException)
             {
@@ -281,7 +290,7 @@ public class VehicleController : Controller
                 {
                     await UpdateVehicleLocationsAsync(selectedLocations, vehicleToUpdate);
                     await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction("Details", new { vehicleToUpdate.ID }); //This line got changed
                 }
             }
             catch (DbUpdateConcurrencyException)
@@ -335,7 +344,13 @@ public class VehicleController : Controller
         }
 
         await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        var returnURL = ViewData["returnURL"]?.ToString();
+        if (string.IsNullOrEmpty(returnURL))
+        {
+            return RedirectToAction(nameof(Index)); //Elephant falls asleep
+        }
+
+        return Redirect(returnURL);
     }
 
     private bool VehicleExists(int? id)

@@ -1,10 +1,6 @@
 @model CarRental.Models.Employee
 
-@{
-    ViewData["Title"] = "Edit";
-}
-
-<h1>Edit</h1>
+<partial name="_ViewHeading" />
 
 <h4>Employee</h4>
 <hr />
@@ -57,7 +53,7 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <partial name="_BackToList" />
 </div>
 
 @section Scripts {

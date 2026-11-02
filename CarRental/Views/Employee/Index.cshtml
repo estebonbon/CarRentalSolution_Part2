@@ -1,14 +1,11 @@
 @model IEnumerable<CarRental.Models.Employee>
 
-@{
-    ViewData["Title"] = "Index";
-}
-
-<h1>Index</h1>
+<partial name="_ViewHeading" />
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create">Create New @ViewData["ControllerFriendlyName"]</a>
 </p>
+
 <form asp-action="Index" method="get">
     <input type="hidden" name="sortDirection" value="@ViewData["sortDirection"]" />
 
@@ -86,4 +83,14 @@
             }
         </tbody>
     </table>
+    <partial name="_PagingNavBar" />
 </form>
+
+@section Scripts {
+    <script type="text/javascript">
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+}

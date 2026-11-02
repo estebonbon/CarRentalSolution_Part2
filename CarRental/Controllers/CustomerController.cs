@@ -1,12 +1,15 @@
 
+using CarRental.CustomControllers;
 using CarRental.Data;
 using CarRental.Models;
+using CarRental.Utilities;
+using CarRental.Utilities.CarRental.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Mono.TextTemplating;
 
-public class CustomerController : Controller
+public class CustomerController : ElephantController
 {
     private readonly CarRentalContext _context;
 
@@ -16,7 +19,8 @@ public class CustomerController : Controller
     }
 
     // GET: CUSTOMER
-    public async Task<IActionResult> Index(string? SearchString, int? MembershipTypeID, string? actionButton, string sortDirection = "asc", string sortField = "Customer")    
+    //Step 2C, page, pagesize
+    public async Task<IActionResult> Index(string? SearchString, int? MembershipTypeID, string? actionButton, int? page, int? pageSizeID, string sortDirection = "asc", string sortField = "Customer")    
     {
 
         //List of sort options for the columns
@@ -66,7 +70,8 @@ public class CustomerController : Controller
         //Before we sort, see if we have called for a change of filtering or sorting
         if (!String.IsNullOrEmpty(actionButton)) //Form Submitted!
         {
-            //page = 1;//Reset page to start
+            page = 1;//Reset page to start, when ever filtering or sort chages, 
+            //Clicking the page button wont reset the current filters
 
             if (sortOptions.Contains(actionButton))//Change of sort is requested
             {
@@ -114,8 +119,15 @@ public class CustomerController : Controller
         //Remeber the sort for the next request
         ViewData["sortField"] = sortField;
         ViewData["sortDirection"] = sortDirection;
+
+        //Handle Paging
+        int pageSize = PageSizeHelper.SetPageSize(HttpContext, pageSizeID, ControllerName());
+        ViewData["pageSizeID"] = PageSizeHelper.PageSizeList(pageSize);
+        var pagedData = await PaginatedList<Customer>.CreateAsync(customers.AsNoTracking(), page ?? 1, pageSize); //Use 1 by defualt, createAsync is a query method from Paginated List
+        
         //return View(customers); 
-        return View(await customers.ToListAsync()); //This makes that filtering happen first and then the customers are displayed, ListAsync makes it wait
+        return View(pagedData); //This makes that filtering happen first and then the customers are displayed, ListAsync makes it wait
+        //No display problems should happen in the view because PaginatedList inhersits from list, and there for recieves the same data type a collection/list of customers
     }
 
     // GET: CUSTOMER/Details/5
@@ -161,7 +173,7 @@ public class CustomerController : Controller
             {
                 _context.Add(customer);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Details", new { customer.ID });
             }
         }
         catch (DbUpdateException dex)
@@ -227,7 +239,8 @@ public class CustomerController : Controller
             try
             {
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                //return RedirectToAction(nameof(Index)); changed
+                return RedirectToAction("Details", new { customerToUpdate.ID });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -293,8 +306,17 @@ public class CustomerController : Controller
                 _context.Customers.Remove(customer);
             }
 
+            //await _context.SaveChangesAsync(); OLD CODE VERSION
+            //return RedirectToAction(nameof(Index));
+
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            var returnURL = ViewData["returnURL"]?.ToString();
+            if (string.IsNullOrEmpty(returnURL))
+            {
+                return RedirectToAction(nameof(Index)); //Elephant falls asleep
+            }
+
+            return Redirect(returnURL);
         }
         catch (DbUpdateException)
         {
